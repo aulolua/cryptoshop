@@ -1,1 +1,112 @@
-<iframe src="test.html"></iframe>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Crypto Payment Checker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #paymentStatus {
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 20px;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    #statusText {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    #statusIcon {
+      font-size: 50px;
+      margin-top: 20px;
+    }
+
+    .fa-check-circle {
+      color: green;
+    }
+
+    .fa-times-circle {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Crypto Payment Checker</h1>
+  
+  <div id="paymentStatus">
+    <h2>Payment Status:</h2>
+    <p id="statusText">Waiting for payment confirmation...</p>
+    <i class="fas fa-check-circle" id="statusIcon"></i>
+  </div>
+
+  <script>
+    // Function to check payment status using the Blockchair API
+    function checkPaymentStatus() {
+      // Replace 'YOUR_CRYPTO_ADDRESS' with the actual crypto address to check
+      const cryptoAddress = 'YOUR_CRYPTO_ADDRESS';
+      const apiUrl = `https://api.blockchair.com/bitcoin/dashboards/address/${cryptoAddress}`;
+
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          const confirmations = data.data[0].address.statistics.blockchair.confirmations;
+
+          if (confirmations > 1) {
+            document.getElementById('statusText').textContent = 'Payment received successfully!';
+            document.getElementById('statusIcon').classList.add('fa-check-circle');
+            document.getElementById('statusIcon').classList.remove('fa-times-circle');
+          } else {
+            document.getElementById('statusText').textContent = 'Transaction failed.';
+            document.getElementById('statusIcon').classList.add('fa-times-circle');
+            document.getElementById('statusIcon').classList.remove('fa-check-circle');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    // Function to check if the session has expired
+    function checkSessionExpiration() {
+      const sessionStart = localStorage.getItem('sessionStart');
+      if (sessionStart) {
+        const currentTime = new Date().getTime();
+        const sessionDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+        if (currentTime - sessionStart > sessionDuration) {
+          document.getElementById('statusText').textContent = 'Session expired.';
+          document.getElementById('statusIcon').classList.add('fa-times-circle');
+          document.getElementById('statusIcon').classList.remove('fa-check-circle');
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Set session start timestamp
+      const sessionStart = new Date().getTime();
+      localStorage.setItem('sessionStart', sessionStart);
+
+      // Check if the session has expired
+      if (!checkSessionExpiration()) {
+        // Call the payment status function
+        checkPaymentStatus();
+      }
+    });
+  </script>
+</body>
+</html>
